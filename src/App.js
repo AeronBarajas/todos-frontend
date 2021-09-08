@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 
 import { Route, Switch, Link } from "react-router-dom";
 
-function App() {
+function App(props) {
   //////////////////////
   // style objects
   //////////////////////
@@ -31,10 +31,17 @@ function App() {
 
   // State to Hold List of Todos
   const [posts, setPosts] = useState([]);
+  
 
   //////////////////////////
   // Functions
   //////////////////////////
+
+  const nullTodo = {
+    subject: "",
+    details: ""
+  }
+  const [targetTodo, setTargetTodo] = useState(nullTodo)
 
   const getTodos = async () => {
     const response = await fetch(url)
@@ -54,9 +61,30 @@ function App() {
     getTodos()
   }
 
-  const nullTodo = {
-    subject: "",
-    details: ""
+  const getTargetTodo = (todo) => {
+    setTargetTodo(todo)
+    props.history.push("/edit")
+  }
+
+  const updateTodo = async (todo) => {
+    const response = await fetch(url + todo.id + "/", {
+      methods: "put",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(todo)
+    })
+
+    getTodos()
+  }
+
+  const deleteTodo = async (todo) => {
+    const response = await fetch(url + todo.id + "/", {
+      method:"delete"
+    })
+
+    getTodos()
+    props.history.push("/")
   }
 
   //////////////////////////
@@ -80,15 +108,11 @@ function App() {
         />
         <Route
           path="/post/:id"
-          render={(routerProps) => <SinglePost {...routerProps} posts={posts} />}
-        />
-        <Route
-          path="/new"
-          render={(routerProps) => <Form {...routerProps}/>}
-        />
-        <Route
-          path="/edit"
-          render={(routerProps) => <Form {...routerProps}/>}
+          render={(routerProps) => <SinglePost 
+            {...routerProps} posts={posts} 
+            edit={getTargetTodo} 
+            deleteTodo={deleteTodo}
+          /> }
         />
         <Route
           path="/new"
@@ -99,7 +123,15 @@ function App() {
             buttonLabel="Create Todo"
             />}
         />
-
+        <Route
+          path="/edit"
+          render={(routerProps) => <Form 
+            {...routerProps}
+            initialTodo={targetTodo}
+            handleSubmit={updateTodo}
+            buttonLabel="Update Todo"
+            />}
+        />
       </Switch>
       <Link to="/new"><button style={button}>Create New Todo</button></Link>
     </div>
